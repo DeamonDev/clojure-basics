@@ -1,4 +1,4 @@
-# first-steps
+# clojure-basics
 
 My Clojure learning project. I'm an experienced developer, but new to Clojure, and
 I'm here for two things:
