@@ -37,7 +37,6 @@
     (zero? n) :zero
     :else :positive))
 
-
 ;; -----------------------------------------------------------------------------
 ;; 03. full-name
 ;; Build a full name from a person map. :middle-name is optional.
@@ -133,7 +132,14 @@
 ;;       Use +' instead of + so big numbers auto-promote to BigInt
 ;;       (the test checks (nth (fibs) 100)).
 (defn fibs []
-  (todo))
+  (map first
+       (iterate (fn [[a b]] [b (+' a b)])
+                [0 1])))
+
+(defn fibs->> []
+  (->> [0 1]
+       (iterate (fn [[a b]] [b (+' a b)]))
+       (map first)))
 
 ;; =============================================================================
 ;; Part 3 - Immutable data

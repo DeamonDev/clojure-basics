@@ -67,6 +67,11 @@
   (testing "lazy, infinite, no overflow"
     (is (= 354224848179261915075N (nth (ch/fibs) 100)))))
 
+(deftest c09-fibs->>-test
+  (is (= [0 1 1 2 3 5 8 13 21 34] (take 10 (ch/fibs->>))))
+  (testing "lazy, infinite, no overflow"
+    (is (= 354224848179261915075N (nth (ch/fibs->>) 100)))))
+
 (deftest c10-restock-test
   (let [inv {:warehouse "A" :items {:apple {:qty 3}}}]
     (is (= {:warehouse "A" :items {:apple {:qty 5}}}
