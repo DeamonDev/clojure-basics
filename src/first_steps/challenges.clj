@@ -213,8 +213,17 @@
 ;;       semantics). To change the dispatch fn, (ns-unmap *ns* 'area) first.
 (defmulti area :shape)
 
-(defmethod area :default [shape]
-  (todo))
+(defmethod area :circle [{:keys [r]}]
+  (* Math/PI (square r)))
+
+(defmethod area :rect [{:keys [w h]}]
+  (* w h))
+
+(defmethod area :triangle [{:keys [base h]}]
+  (/ (* base h) 2))
+
+(defmethod area :default [{:keys [shape]}]
+  (throw (ex-info "Unknown shape" {:shape shape})))
 
 ;; -----------------------------------------------------------------------------
 ;; 15. Speaker (protocols & records)
