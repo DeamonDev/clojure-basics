@@ -163,7 +163,10 @@
 ;; Hint: (sort-by keyfn comparator coll) - try `>` as the comparator.
 ;;       Then take and map. A ->> pipeline reads nicely here.
 (defn oldest-names [n people]
-  (todo))
+  (->> people
+       (sort-by :age >)
+       (map :name)
+       (take n)))
 
 ;; =============================================================================
 ;; Part 4 - Functions as values
