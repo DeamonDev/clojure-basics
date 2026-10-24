@@ -192,7 +192,9 @@
 ;; Every counter is independent.
 ;; Hint: a closure over an (atom 0). `swap!` returns the new value.
 (defn make-counter []
-  (todo))
+  (let [counter (atom 0)]
+    (fn []
+      (swap! counter inc))))
 
 ;; =============================================================================
 ;; Part 5 - Polymorphism
