@@ -181,7 +181,10 @@
 ;; Hint: fs is a seq of functions (or nil). Return a (fn [x] ...).
 ;;       `reduce` over (reverse fs), threading x through each one.
 (defn my-comp [& fs]
-  (todo))
+  (fn [x]
+    (reduce (fn [acc f] (f acc))
+            x
+            (reverse fs))))
 
 ;; -----------------------------------------------------------------------------
 ;; 13. make-counter
