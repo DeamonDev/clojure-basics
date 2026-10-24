@@ -153,7 +153,7 @@
 ;;   ;=> {:warehouse "A" :items {:apple {:qty 5}}}
 ;; Hint: update-in with a path vector [:items item :qty]; fnil again.
 (defn restock [inventory item qty]
-  (todo))
+  (update-in inventory [:items item :qty] (fnil #(+ qty %) 0)))
 
 ;; -----------------------------------------------------------------------------
 ;; 11. oldest-names
