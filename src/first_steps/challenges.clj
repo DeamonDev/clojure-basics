@@ -242,17 +242,19 @@
 (defrecord Dog [name]
   Speaker
   (speak [_]
-    (todo)))
+    (str/join " " [name "says woof"])))
 
 (defrecord Cat [name grumpy?]
   Speaker
   (speak [_]
-    (todo)))
+    (if grumpy?
+      (str/join " " [name "ignores you"])
+      (str/join " " [name "says meow"]))))
 
 (extend-protocol Speaker
   String
   (speak [s]
-    (todo)))
+    (str/join " " [s "says nothing"])))
 
 ;; =============================================================================
 ;; Part 6 - Interop, errors, state
