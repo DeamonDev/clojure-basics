@@ -267,7 +267,7 @@
 ;;       parse-long since 1.11 - check it out afterwards.)
 ;; Hint: (try ... (catch NumberFormatException _ nil))
 (defn parse-long-safe [s]
-  (todo))
+  (try (Long/parseLong s) (catch NumberFormatException _ nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; 17. transfer
