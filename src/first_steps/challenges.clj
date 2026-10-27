@@ -293,8 +293,7 @@
 ;; Hint: (swap! a f x y z) calls (f current-value x y z) and retries on
 ;;       conflict. The test fires 90 concurrent futures at it.
 (defn transfer! [accounts-atom from to amount]
-  (todo))
-
+  (swap! accounts-atom transfer from to amount))
 ;; =============================================================================
 ;; Part 7 - Macros
 ;; =============================================================================
