@@ -324,7 +324,12 @@
 ;;       it did is kept. Like swap!, a transaction may be RETRIED, so no side
 ;;       effects inside (no println, no I/O).
 (defn transfer-stm! [accounts from to amount]
-  (todo))
+  (dosync
+    (let [balance @(get accounts from)]
+      (when (< balance amount)
+        (throw (ex-info "Insufficient funds" {:account from :balance balance :amount amount})))
+      (alter (get accounts from) - amount)
+      (alter (get accounts to) + amount))))
 
 ;; -----------------------------------------------------------------------------
 ;; 20. total-balance
