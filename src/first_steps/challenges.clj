@@ -277,7 +277,13 @@
 ;;   (transfer {:a 100 :b 0} :a :b 30) ;=> {:a 70 :b 30}
 ;; Hint: `let` the balance, `when`/`if` + throw, then -> with two `update`s.
 (defn transfer [accounts from to amount]
-  (todo))
+  (let [balance (get accounts from)]
+    (when (< balance amount)
+      (throw (ex-info "Insufficient funds"
+                      {:account from :balance balance :amount amount})))
+    (-> accounts
+        (update from - amount)
+        (update to + amount))))
 
 ;; -----------------------------------------------------------------------------
 ;; 18. transfer!
