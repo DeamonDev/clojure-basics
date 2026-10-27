@@ -1,5 +1,6 @@
 {:paths ["src"]
- :deps  {org.clojure/clojure {:mvn/version "1.12.3"}}
+ :deps  {org.clojure/clojure    {:mvn/version "1.12.3"}
+         org.clojure/core.async {:mvn/version "1.8.741"}}
  :aliases
  {;; REPL / editor alias: adds test sources, no :main-opts, so it never
   ;; hijacks REPL startup.  clj -A:dev   (or select "dev" in your IDE)

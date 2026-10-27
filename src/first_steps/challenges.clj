@@ -6,7 +6,8 @@
     clojure -M:test -v first-steps.challenges-test/c01-square-test
   Run all of them:
     clojure -M:test -n first-steps.challenges-test"
-  (:require [clojure.string :as str]))
+  (:require [clojure.core.async :as a]
+            [clojure.string :as str]))
 
 (defn todo
   "Placeholder. If this gets called, the challenge isn't solved yet."
@@ -294,12 +295,178 @@
 ;;       conflict. The test fires 90 concurrent futures at it.
 (defn transfer! [accounts-atom from to amount]
   (swap! accounts-atom transfer from to amount))
+
 ;; =============================================================================
-;; Part 7 - Macros
+;; Part 7 - Coordinated state: refs (STM) and agents
+;; =============================================================================
+;; Clojure has four reference types. Each one answers a different question:
+;;
+;;   atom   - one value, changed synchronously, independently    (you used it)
+;;   ref    - SEVERAL values changed together in a transaction   (STM)
+;;   agent  - one value, changed asynchronously, one action at a time
+;;   var    - global definitions (def/defn); rarely mutated by hand
+;;
+;; In all of them the CONTENTS are immutable values; only the reference moves
+;; from one value to the next. You read any of them with @.
+
+;; -----------------------------------------------------------------------------
+;; 19. transfer-stm!
+;; Now every account is its own ref: {:a (ref 100) :b (ref 0)}.
+;; Move amount between two of them so that NO thread can ever see the money
+;; missing from one account but not yet in the other. Same error as in 17 when
+;; funds are insufficient - and then neither ref may change.
+;; The return value doesn't matter.
+;;   (def accts {:a (ref 100) :b (ref 0)})
+;;   (transfer-stm! accts :a :b 30)
+;;   [@(:a accts) @(:b accts)] ;=> [70 30]
+;; Hint: (dosync ...) starts a transaction; inside it, (alter r f & args) works
+;;       like swap!. Throwing inside dosync aborts the transaction - nothing
+;;       it did is kept. Like swap!, a transaction may be RETRIED, so no side
+;;       effects inside (no println, no I/O).
+(defn transfer-stm! [accounts from to amount]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 20. total-balance
+;; Return the sum of all balances in accounts (a map of id -> ref) as ONE
+;; consistent snapshot - correct even while other threads are transferring.
+;;   (total-balance {:a (ref 70) :b (ref 30)}) ;=> 100
+;; Hint: reading refs one by one outside a transaction can mix "before" and
+;;       "after" of someone else's transfer. Inside dosync, every read sees
+;;       the same point in time. vals, map deref, reduce +.
+(defn total-balance [accounts]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 21. record-hit!
+;; stats is a ref holding {page count}. Add one hit for page.
+;;   (def stats (ref {}))
+;;   (record-hit! stats "/home") (record-hit! stats "/home")
+;;   @stats ;=> {"/home" 2}
+;; Rule: use `commute`, not `alter`. Counting is order-independent - it
+;;       doesn't matter which of two concurrent increments happens first - so
+;;       commute lets colliding transactions both succeed without a retry.
+;;       (The test can't tell the difference. The point is knowing when you
+;;       may use it.)
+;; Hint: (commute r f & args) has the same shape as alter, and like alter it
+;;       only works inside (dosync ...). You've already written the f:
+;;       remember update + fnil from 06.
+(defn record-hit! [stats page]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 22. log! / read-log (agents)
+;; An agent holds a value that changes ASYNCHRONOUSLY: you send it an action,
+;; and that action runs later on a thread pool, one action at a time.
+;; - log!     appends msg to the agent's vector and returns IMMEDIATELY
+;;            (return what send returns: the agent itself)
+;; - read-log waits until every action sent so far has run, then returns the
+;;            agent's current value
+;;   (def log (agent []))
+;;   (log! log "hi")
+;;   (read-log log) ;=> ["hi"]
+;; Hint: (send a f & args) - same shape as swap!, but returns at once.
+;;       (await a) blocks until pending actions are done.
+;;       Use send-off instead of send for actions that block (I/O).
+(defn log! [log-agent msg]
+  (todo))
+
+(defn read-log [log-agent]
+  (todo))
+
+;; =============================================================================
+;; Part 8 - Async control flow
 ;; =============================================================================
 
 ;; -----------------------------------------------------------------------------
-;; 19. unless
+;; 23. run-parallel (futures)
+;; Given a seq of zero-arg functions, run them ALL at the same time and return
+;; a vector of their results, in the same order.
+;;   (run-parallel [#(do (Thread/sleep 100) 1)
+;;                  #(do (Thread/sleep 100) 2)]) ;=> [1 2], after ~100ms, not ~200ms
+;; Hint: (future (f)) runs f on another thread; @fut waits for its result.
+;;       TRAP: map is LAZY. If you deref while mapping, each future starts only
+;;       after the previous one finished, so they run one by one. Make sure
+;;       ALL futures are started (mapv, doall) before you deref any of them.
+(defn run-parallel [fs]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 24. with-timeout
+;; Run f on another thread. If it finishes within ms milliseconds, return its
+;; result. Otherwise cancel it and return :timeout.
+;;   (with-timeout 100 (fn [] 42))                     ;=> 42
+;;   (with-timeout 100 (fn [] (Thread/sleep 5000) 42)) ;=> :timeout, after ~100ms
+;; Hint: deref has a 3-argument form: (deref fut timeout-ms timeout-value).
+;;       (future-cancel fut) interrupts the thread. The test checks that a
+;;       timed-out f really stops.
+;;       Idiom: use a private sentinel like ::timeout as timeout-value, so it
+;;       can't collide with a real result.
+(defn with-timeout [ms f]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 25. make-loader (delay)
+;; Return a zero-arg function that calls load-fn the FIRST time it's called
+;; and returns the cached result after that - even when many threads call it
+;; at the same moment. load-fn must run exactly once.
+;;   (def config (make-loader (fn [] (println "loading...") {:port 8080})))
+;;   (config) ; prints loading..., returns {:port 8080}
+;;   (config) ; returns {:port 8080}, prints nothing
+;; Hint: (delay expr) doesn't evaluate expr until the first deref, then caches
+;;       it - and it's thread-safe for free. Closures again, as in 13.
+;;       (Hand-rolling this with an atom + "already loaded?" check is a race.)
+(defn make-loader [load-fn]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 26. race (promises)
+;; Run all fns in parallel; return the result of whichever finishes FIRST.
+;;   (race [#(do (Thread/sleep 1000) :slow)
+;;          #(do (Thread/sleep 50) :fast)]) ;=> :fast, after ~50ms
+;; Hint: (promise) is an empty box that can be filled exactly once with
+;;       (deliver p v); later delivers are ignored. @p blocks until it's
+;;       filled. Let every future deliver into the same promise.
+(defn race [fs]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 27. square-all-async (core.async channels)
+;; A channel is a queue between threads: producers put, consumers take.
+;; Start a producer thread that puts every number of xs onto a channel and
+;; then closes it. On the calling thread, take from the channel until it's
+;; closed and return a vector of the squares.
+;;   (square-all-async [1 2 3]) ;=> [1 4 9]
+;; Hint: (a/chan) makes a channel, (a/thread ...) runs code on another thread.
+;;       (a/>!! ch v) puts (blocking), (a/<!! ch) takes (blocking) and returns
+;;       nil once the channel is closed and empty. (a/close! ch) closes it.
+;;       Consume with loop/recur until you get nil.
+;;       Inside (a/go ...) blocks you'd use >! and <! (one bang) instead.
+;;       Bonus: (a/chan 10 (map square)) - a channel can transform values.
+(defn square-all-async [xs]
+  (todo))
+
+;; -----------------------------------------------------------------------------
+;; 28. first-response (core.async alts!!)
+;; Call several "servers" (zero-arg fns, some slow) at once and return the
+;; first answer. If none answers within ms milliseconds, return :timeout.
+;;   (first-response 500 [#(do (Thread/sleep 300) :slow)
+;;                        #(do (Thread/sleep 50) :fast)]) ;=> :fast
+;;   (first-response 100 [#(do (Thread/sleep 300) :slow)]) ;=> :timeout
+;; Hint: (a/thread (f)) returns a channel that will receive f's result.
+;;       (a/timeout ms) returns a channel that closes after ms.
+;;       (a/alts!! [ch1 ch2 ...]) blocks until ONE of them delivers and
+;;       returns [value channel] - so you can tell which one it was.
+;;       Compare with 26: same race, but timeouts come for free.
+(defn first-response [ms fs]
+  (todo))
+
+;; =============================================================================
+;; Part 9 - Macros
+;; =============================================================================
+
+;; -----------------------------------------------------------------------------
+;; 29. unless
 ;; Evaluate body (like `do`) only when test is falsey; otherwise return nil.
 ;;   (unless false :yes)                     ;=> :yes
 ;;   (unless true (println "never printed")) ;=> nil

@@ -15,13 +15,16 @@ describing the task plus a stub to replace with real code, checked by tests.
 
 | Idea | What it means in practice | Where I practice it |
 |---|---|---|
-| **Code is data** | Programs are lists, vectors and maps. Parens *are* the structure. | everywhere, Paredit, macros (19) |
+| **Code is data** | Programs are lists, vectors and maps. Parens *are* the structure. | everywhere, Paredit, macros (29) |
 | **Simple over easy** | Small functions over plain data; no classes holding state and behaviour together. | 01-07 |
 | **Data first** | Maps and seqs instead of custom types; a few generic functions over them. | 03, 06, 07, 10, 11 |
 | **Immutability by default** | "Changing" data returns a new value; the old one stays intact. | 10, 17 |
 | **Sequences & laziness** | One abstraction over every collection; infinite seqs are fine. | 04, 05, 08, 09 |
 | **Functions are values** | Pass, return and compose them; build behaviour from small pieces. | 04, 11, 12, 13 |
 | **State is explicit and rare** | Pure functions do the work; atoms mark the few places where things change. | 13, 18 |
+| **Identity vs. value** | A reference (atom, ref, agent) is an identity that points to a succession of immutable values. Pick the type by how changes coordinate. | 18-22 |
+| **Concurrency without locks** | STM transactions, compare-and-set, single-threaded agents; reads never block. | 18-22 |
+| **Async as values** | Futures, promises, delays and channels are things you pass around and deref or take from. | 23-28 |
 | **Polymorphism à la carte** | Multimethods and protocols, decoupled from inheritance; extend types I don't own. | 14, 15 |
 | **Embrace the host** | Java is right there; interop instead of wrappers. | 15, 16 |
 | **REPL-driven development** | Grow the program live, one form at a time, instead of edit-compile-run. | the whole workflow |
