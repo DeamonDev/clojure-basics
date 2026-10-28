@@ -340,7 +340,10 @@
 ;;       "after" of someone else's transfer. Inside dosync, every read sees
 ;;       the same point in time. vals, map deref, reduce +.
 (defn total-balance [accounts]
-  (todo))
+  (dosync
+    (->> (vals accounts)
+         (map deref)
+         (reduce + 0))))
 
 ;; -----------------------------------------------------------------------------
 ;; 21. record-hit!
