@@ -360,7 +360,8 @@
 ;;       only works inside (dosync ...). You've already written the f:
 ;;       remember update + fnil from 06.
 (defn record-hit! [stats page]
-  (todo))
+  (dosync
+    (commute stats update page (fnil inc 0))))
 
 ;; -----------------------------------------------------------------------------
 ;; 22. log! / read-log (agents)
